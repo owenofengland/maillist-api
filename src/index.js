@@ -15,7 +15,11 @@ const {
     getUserByEmail,
     deleteUser,
     updateUser
-} = require('./database/users')
+} = require('./database/users');
+const {
+    verifySchema
+} = require('./database/userSchema');
+
 
 
 const app = express();
@@ -85,32 +89,42 @@ app.get('/email/:email', async (req, res) => {
 
 app.post('/', async (req, res) => {
     const newUser = req.body;
-    await getUserByEmail(req.body.email).then((response) => {
-        if (response) {
-            res.status(403)
+    if (verifySchema(newUser)) {
+        await getUserByEmail(req.body.email).then((response) => {
+            if (response) {
+                res.status(403)
+                res.send({
+                    "error": `Account with this email already exists`
+                })
+            }
+        }).catch((error) => {
+            console.log('error', error);
+            res.status(400)
             res.send({
-                "error": `Account with this email already exists`
+                "error": "Error validating email in/not in use"
             })
-        }
-    }).catch((error) => {
-        console.log('error', error);
-        res.status(400)
-        res.send({
-            "error": "Error validating email in/not in use"
-        })
-    });
-    await insertUser(newUser).then((response) => {
-        res.status(200)
-        res.send({
-            message: 'New user added'
-        })
-    }).catch((error) => {
-        console.log(error);
-        res.status(400)
-        res.send({
-            "error": `Could not create new user with your parameters`
         });
-    });
+        await insertUser(newUser).then((response) => {
+            res.status(200)
+            res.send({
+                'status': 'success',
+                'message': 'New user added'
+            })
+        }).catch((error) => {
+            console.log(error);
+            res.status(400)
+            res.send({
+                "error": `Could not create new user with your parameters`
+            });
+        });
+    } else {
+        console.log("Invalid schema");
+        res.status(422);
+        res.send({
+            "error": "Invalid request data"
+        })
+
+    }
 });
 
 app.delete('/id/:id', async (req, res) => {
@@ -137,18 +151,28 @@ app.delete('/id/:id', async (req, res) => {
 
 app.put('/id/:id', async (req, res) => {
     const updatedUser = req.body;
-    await updateUser(req.params.id, updatedUser).then((response) => {
-        res.status(201)
-        res.send({
-            message: 'User Updated'
-        })
-    }).catch((error) => {
-        console.log(error);
-        res.status(400)
-        res.send({
-            "error": `Could not update ${id}`
+    if (verifySchema(updatedUser)) {
+        await updateUser(req.params.id, updatedUser).then((response) => {
+            res.status(201)
+            res.send({
+                message: 'User Updated'
+            })
+        }).catch((error) => {
+            console.log(error);
+            res.status(400)
+            res.send({
+                "error": `Could not update ${id}`
+            });
         });
-    });
+    } else {
+        console.log("Invalid schema");
+        res.status(422);
+        res.send({
+            "error": "Invalid request data"
+        })
+
+    }
+
 });
 
 app.get('*', (req, res) => {

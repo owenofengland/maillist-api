@@ -6,6 +6,7 @@ const {
     ObjectID
 } = require('mongodb');
 
+
 const collectionName = 'users';
 
 const insertUser = async (user) => {
@@ -31,14 +32,6 @@ const getUserById = async (id) => {
     return database.collection(collectionName).findOne({
         _id: new ObjectID(id)
     });
-    // .then((response) => {
-    //     console.log('Found record', response);
-    //     return response;
-    // }).catch((error) => {
-    //     console.log('Error', error);
-    //     return error;
-    // })
-
 };
 
 const getUserByEmail = async (email) => {

@@ -10,5 +10,4 @@ Built with:
 To Do:
 
 * Validation via API tokens/keys
-* Enforce schema with JOI
 * Integration with mailing service
