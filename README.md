@@ -9,5 +9,8 @@ Built with:
 
 To Do:
 
-* Validation via API tokens/keys
 * Integration with mailing service
+
+Done:
+* Schema validation with JOI
+* Validation of API token with middleware and environment variables (no JWT, single token)

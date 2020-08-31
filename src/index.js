@@ -1,8 +1,18 @@
+// 
+// 
+// PACKAGE IMPORTS
+// 
+
+require('dotenv').config()
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const morgan = require('morgan');
+
+// 
+// FILE IMPORTS
+// 
 
 const {
     startDatabase,
@@ -21,16 +31,60 @@ const {
 } = require('./database/userSchema');
 
 
+// 
+// APPLICATION VARIABLES AND SETTINGS
+// 
 
 const app = express();
+
+const corsOptions = {
+    origin: 'https://localhost:4000'
+}
+
+// 
+// CUSTOM MIDDLEWARE FUNCTION
+// 
+
+const authenticate = (req, res, next) => {
+    if (req.headers['authorization']) {
+        try {
+            let authorization = req.headers['authorization'].split(' ');
+            if (authorization[0] !== 'Bearer') {
+                return res.status(401).send();
+            } else {
+                console.log(process.env.ACCESS_TOKEN_SECRET)
+                if (authorization[1] === process.env.ACCESS_TOKEN_SECRET) {
+                    return next();
+                }
+                return res.status(401).send()
+            }
+        } catch (err) {
+            return res.status(403).send()
+        }
+    } else {
+        res.status(401).send();
+    }
+}
+
+// 
+// MIDDLEWARE
+// 
+
+app.use(express.json())
 
 app.use(helmet());
 
 app.use(bodyParser.json());
 
-app.use(cors());
+app.use(cors(corsOptions));
 
 app.use(morgan('combined'));
+
+app.use(authenticate);
+
+// 
+// Routes
+// 
 
 app.get('/', async (req, res) => {
     await getUsers().then((response) => {
@@ -182,8 +236,11 @@ app.get('*', (req, res) => {
     })
 })
 
-const PORT = process.env.PORT || 3001;
+// 
+// Server Initialization
+// 
 
+const PORT = process.env.PORT || 3001;
 
 startDatabase().then(async () => {
     app.listen(PORT, async () => {
